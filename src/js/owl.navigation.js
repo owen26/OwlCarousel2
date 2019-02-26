@@ -5,6 +5,7 @@
  * @author David Deutsch
  * @license The MIT License (MIT)
  */
+import * as jQuery from 'jquery';
 ;(function($, window, document, undefined) {
 	'use strict';
 
@@ -403,4 +404,4 @@
 
 	$.fn.owlCarousel.Constructor.Plugins.Navigation = Navigation;
 
-})(window.Zepto || window.jQuery, window, document);
+})(jQuery, window, document);

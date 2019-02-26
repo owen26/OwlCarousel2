@@ -7,6 +7,7 @@
  * @author David Deutsch
  * @license The MIT License (MIT)
  */
+import * as jQuery from 'jquery';
 ;(function($, Modernizr, window, document, undefined) {
 
 	var events = {
@@ -63,4 +64,4 @@
 		$.support.transform = new String(Modernizr.prefixed('transform'));
 		$.support.transform3d = Modernizr.csstransforms3d;
 	}
-})(window.Zepto || window.jQuery, window.Modernizr, window, document);
+})(jQuery, window.Modernizr, window, document);

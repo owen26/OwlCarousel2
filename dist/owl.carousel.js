@@ -1,6 +1,6 @@
 /**
- * Owl Carousel v2.3.4
- * Copyright 2013-2018 David Deutsch
+ * Owl Carousel v3.0.0
+ * Copyright 2013-2019 David Deutsch
  * Licensed under: SEE LICENSE IN https://github.com/OwlCarousel2/OwlCarousel2/blob/master/LICENSE
  */
 /**
@@ -15,6 +15,7 @@
  * @todo Test Zepto
  * @todo stagePadding calculate wrong active classes
  */
+import * as jQuery from 'jquery';
 ;(function($, window, document, undefined) {
 
 	/**
@@ -340,16 +341,12 @@
 			while (repeat > 0) {
 				// Switch to only using appended clones
 				clones.push(this.normalize(clones.length / 2, true));
-				append = append + items[clones[clones.length - 1]][0].outerHTML;
+				$(items[clones[clones.length - 1]][0]).clone(true).addClass('cloned').appendTo(this.$stage);
 				clones.push(this.normalize(items.length - 1 - (clones.length - 1) / 2, true));
-				prepend = items[clones[clones.length - 1]][0].outerHTML + prepend;
+				$(items[clones[clones.length - 1]][0]).clone(true).addClass('cloned').prependTo(this.$stage);
 				repeat -= 1;
 			}
-
 			this._clones = clones;
-
-			$(append).addClass('cloned').appendTo(this.$stage);
-			$(prepend).addClass('cloned').prependTo(this.$stage);
 		}
 	}, {
 		filter: [ 'width', 'items', 'settings' ],
@@ -664,7 +661,9 @@
 	 * Refreshes the carousel primarily for adaptive purposes.
 	 * @public
 	 */
-	Owl.prototype.refresh = function() {
+	Owl.prototype.refresh = function(resizing) {
+		resizing = resizing || false;
+
 		this.enter('refreshing');
 		this.trigger('refresh');
 
@@ -675,6 +674,10 @@
 		this.$element.addClass(this.options.refreshClass);
 
 		this.update();
+
+		if (!resizing) {
+			this.onResize();
+		}
 
 		this.$element.removeClass(this.options.refreshClass);
 
@@ -696,6 +699,8 @@
 	 * @protected
 	 */
 	Owl.prototype.onResize = function() {
+		var resizing = true;
+
 		if (!this._items.length) {
 			return false;
 		}
@@ -717,7 +722,7 @@
 
 		this.invalidate('width');
 
-		this.refresh();
+		this.refresh(resizing);
 
 		this.leave('resizing');
 		this.trigger('resized');
@@ -896,7 +901,9 @@
 	Owl.prototype.closest = function(coordinate, direction) {
 		var position = -1,
 			pull = 30,
-			width = this.width(),
+			width = this.width(), // visible carousel width
+			count = this.settings.items,
+			itemWidth = Math.round(width / count),
 			coordinates = this.coordinates();
 
 		if (!this.settings.freeDrag) {
@@ -907,7 +914,7 @@
 					position = index;
 				// on a right pull, check on previous index
 				// to do so, subtract width from value and set position = index + 1
-				} else if (direction === 'right' && coordinate > value - width - pull && coordinate < value - width + pull) {
+				} else if (direction === 'right' && coordinate > value - itemWidth - pull && coordinate < value - itemWidth + pull) {
 					position = index + 1;
 				} else if (this.op(coordinate, '<', value)
 					&& this.op(coordinate, '>', coordinates[index + 1] !== undefined ? coordinates[index + 1] : value - width)) {
@@ -1443,7 +1450,7 @@
 				element.css('opacity', 1);
 				this.leave('pre-loading');
 				!this.is('pre-loading') && !this.is('initializing') && this.refresh();
-			}, this)).attr('src', element.attr('src') || element.attr('data-src') || element.attr('data-src-retina'));
+			}, this)).attr('src', (window.devicePixelRatio > 1) ? element.attr('data-src-retina') : element.attr('data-src') || element.attr('src'));
 		}, this));
 	};
 
@@ -1752,7 +1759,7 @@
 	 */
 	$.fn.owlCarousel.Constructor = Owl;
 
-})(window.Zepto || window.jQuery, window, document);
+})(jQuery, window, document);
 
 /**
  * AutoRefresh Plugin
@@ -1761,6 +1768,7 @@
  * @author David Deutsch
  * @license The MIT License (MIT)
  */
+import * as jQuery from 'jquery';
 ;(function($, window, document, undefined) {
 
 	/**
@@ -1864,7 +1872,7 @@
 
 	$.fn.owlCarousel.Constructor.Plugins.AutoRefresh = AutoRefresh;
 
-})(window.Zepto || window.jQuery, window, document);
+})(jQuery, window, document);
 
 /**
  * Lazy Plugin
@@ -1873,6 +1881,7 @@
  * @author David Deutsch
  * @license The MIT License (MIT)
  */
+import * as jQuery from 'jquery';
 ;(function($, window, document, undefined) {
 
 	/**
@@ -1911,14 +1920,14 @@
 					return;
 				}
 
-				if ((e.property && e.property.name == 'position') || e.type == 'initialized') {
+				if ((e.property && e.property.name === 'position') || e.type === 'initialized' || e.type === 'resized') {
 					var settings = this._core.settings,
 						n = (settings.center && Math.ceil(settings.items / 2) || settings.items),
 						i = ((settings.center && n * -1) || 0),
 						position = (e.property && e.property.value !== undefined ? e.property.value : this._core.current()) + i,
 						clones = this._core.clones().length,
 						load = $.proxy(function(i, v) { this.load(v) }, this);
-					//TODO: Need documentation for this new option
+
 					if (settings.lazyLoadEager > 0) {
 						n += settings.lazyLoadEager;
 						// If the carousel is looping also preload images that are to the "left"
@@ -1927,6 +1936,11 @@
               n++;
             }
 					}
+
+          if (!settings.center && settings.stagePadding) {
+						position--;
+						n += 2;
+          }
 
 					while (i++ < n) {
 						this.load(clones / 2 + this._core.relative(position));
@@ -2014,7 +2028,7 @@
 
 	$.fn.owlCarousel.Constructor.Plugins.Lazy = Lazy;
 
-})(window.Zepto || window.jQuery, window, document);
+})(jQuery, window, document);
 
 /**
  * AutoHeight Plugin
@@ -2023,131 +2037,136 @@
  * @author David Deutsch
  * @license The MIT License (MIT)
  */
-;(function($, window, document, undefined) {
+import * as jQuery from "jquery";
+(function($, window, document, undefined) {
+  /**
+   * Creates the auto height plugin.
+   * @class The Auto Height Plugin
+   * @param {Owl} carousel - The Owl Carousel
+   */
+  var AutoHeight = function(carousel) {
+    /**
+     * Reference to the core.
+     * @protected
+     * @type {Owl}
+     */
+    this._core = carousel;
 
-	/**
-	 * Creates the auto height plugin.
-	 * @class The Auto Height Plugin
-	 * @param {Owl} carousel - The Owl Carousel
-	 */
-	var AutoHeight = function(carousel) {
-		/**
-		 * Reference to the core.
-		 * @protected
-		 * @type {Owl}
-		 */
-		this._core = carousel;
+    this._previousHeight = null;
 
-		this._previousHeight = null;
+    /**
+     * All event handlers.
+     * @protected
+     * @type {Object}
+     */
+    this._handlers = {
+      "initialized.owl.carousel refreshed.owl.carousel": $.proxy(function(e) {
+        if (e.namespace && this._core.settings.autoHeight) {
+          this.update();
+        }
+      }, this),
+      "changed.owl.carousel": $.proxy(function(e) {
+        if (e.namespace && this._core.settings.autoHeight && e.property.name === "position") {
+          this.update();
+        }
+      }, this),
+      "loaded.owl.lazy": $.proxy(function(e) {
+        if (
+          e.namespace &&
+          this._core.settings.autoHeight &&
+          e.element.closest("." + this._core.settings.itemClass).index() === this._core.current()
+        ) {
+          this.update();
+        }
+      }, this)
+    };
 
-		/**
-		 * All event handlers.
-		 * @protected
-		 * @type {Object}
-		 */
-		this._handlers = {
-			'initialized.owl.carousel refreshed.owl.carousel': $.proxy(function(e) {
-				if (e.namespace && this._core.settings.autoHeight) {
-					this.update();
-				}
-			}, this),
-			'changed.owl.carousel': $.proxy(function(e) {
-				if (e.namespace && this._core.settings.autoHeight && e.property.name === 'position'){
-					this.update();
-				}
-			}, this),
-			'loaded.owl.lazy': $.proxy(function(e) {
-				if (e.namespace && this._core.settings.autoHeight
-					&& e.element.closest('.' + this._core.settings.itemClass).index() === this._core.current()) {
-					this.update();
-				}
-			}, this)
-		};
+    // set default options
+    this._core.options = $.extend({}, AutoHeight.Defaults, this._core.options);
 
-		// set default options
-		this._core.options = $.extend({}, AutoHeight.Defaults, this._core.options);
+    // register event handlers
+    this._core.$element.on(this._handlers);
+    this._intervalId = null;
+    var refThis = this;
 
-		// register event handlers
-		this._core.$element.on(this._handlers);
-		this._intervalId = null;
-		var refThis = this;
+    // These changes have been taken from a PR by gavrochelegnou proposed in #1575
+    // and have been made compatible with the latest jQuery version
+    $(window).on("load", function() {
+      if (refThis._core.settings.autoHeight) {
+        refThis.update();
+      }
+    });
 
-		// These changes have been taken from a PR by gavrochelegnou proposed in #1575
-		// and have been made compatible with the latest jQuery version
-		$(window).on('load', function() {
-			if (refThis._core.settings.autoHeight) {
-				refThis.update();
-			}
-		});
+    // Autoresize the height of the carousel when window is resized
+    // When carousel has images, the height is dependent on the width
+    // and should also change on resize
+    $(window).resize(function() {
+      if (refThis._core.settings.autoHeight) {
+        if (refThis._intervalId != null) {
+          clearTimeout(refThis._intervalId);
+        }
 
-		// Autoresize the height of the carousel when window is resized
-		// When carousel has images, the height is dependent on the width
-		// and should also change on resize
-		$(window).resize(function() {
-			if (refThis._core.settings.autoHeight) {
-				if (refThis._intervalId != null) {
-					clearTimeout(refThis._intervalId);
-				}
+        refThis._intervalId = setTimeout(function() {
+          refThis.update();
+        }, 250);
+      }
+    });
+  };
 
-				refThis._intervalId = setTimeout(function() {
-					refThis.update();
-				}, 250);
-			}
-		});
+  /**
+   * Default options.
+   * @public
+   */
+  AutoHeight.Defaults = {
+    autoHeight: false,
+    autoHeightClass: "owl-height"
+  };
 
-	};
+  /**
+   * Updates the view.
+   */
+  AutoHeight.prototype.update = function() {
+    var start = this._core._current,
+      end = start + this._core.settings.items,
+      lazyLoadEnabled = this._core.settings.lazyLoad,
+      visible = this._core.$stage
+        .children()
+        .toArray()
+        .slice(start, end),
+      heights = [],
+      maxheight = 0;
 
-	/**
-	 * Default options.
-	 * @public
-	 */
-	AutoHeight.Defaults = {
-		autoHeight: false,
-		autoHeightClass: 'owl-height'
-	};
+    $.each(visible, function(index, item) {
+      heights.push($(item).height());
+    });
 
-	/**
-	 * Updates the view.
-	 */
-	AutoHeight.prototype.update = function() {
-		var start = this._core._current,
-			end = start + this._core.settings.items,
-			lazyLoadEnabled = this._core.settings.lazyLoad,
-			visible = this._core.$stage.children().toArray().slice(start, end),
-			heights = [],
-			maxheight = 0;
+    maxheight = Math.max.apply(null, heights);
 
-		$.each(visible, function(index, item) {
-			heights.push($(item).height());
-		});
+    if (maxheight <= 1 && lazyLoadEnabled && this._previousHeight) {
+      maxheight = this._previousHeight;
+    }
 
-		maxheight = Math.max.apply(null, heights);
+    this._previousHeight = maxheight;
 
-		if (maxheight <= 1 && lazyLoadEnabled && this._previousHeight) {
-			maxheight = this._previousHeight;
-		}
+    this._core.$stage
+      .parent()
+      .height(maxheight)
+      .addClass(this._core.settings.autoHeightClass);
+  };
 
-		this._previousHeight = maxheight;
+  AutoHeight.prototype.destroy = function() {
+    var handler, property;
 
-		this._core.$stage.parent()
-			.height(maxheight)
-			.addClass(this._core.settings.autoHeightClass);
-	};
+    for (handler in this._handlers) {
+      this._core.$element.off(handler, this._handlers[handler]);
+    }
+    for (property in Object.getOwnPropertyNames(this)) {
+      typeof this[property] !== "function" && (this[property] = null);
+    }
+  };
 
-	AutoHeight.prototype.destroy = function() {
-		var handler, property;
-
-		for (handler in this._handlers) {
-			this._core.$element.off(handler, this._handlers[handler]);
-		}
-		for (property in Object.getOwnPropertyNames(this)) {
-			typeof this[property] !== 'function' && (this[property] = null);
-		}
-	};
-
-	$.fn.owlCarousel.Constructor.Plugins.AutoHeight = AutoHeight;
-
-})(window.Zepto || window.jQuery, window, document);
+  $.fn.owlCarousel.Constructor.Plugins.AutoHeight = AutoHeight;
+})(jQuery, window, document);
 
 /**
  * Video Plugin
@@ -2156,6 +2175,7 @@
  * @author David Deutsch
  * @license The MIT License (MIT)
  */
+import * as jQuery from 'jquery';
 ;(function($, window, document, undefined) {
 
 	/**
@@ -2475,7 +2495,7 @@
 
 	$.fn.owlCarousel.Constructor.Plugins.Video = Video;
 
-})(window.Zepto || window.jQuery, window, document);
+})(jQuery, window, document);
 
 /**
  * Animate Plugin
@@ -2484,120 +2504,125 @@
  * @author David Deutsch
  * @license The MIT License (MIT)
  */
-;(function($, window, document, undefined) {
+import * as jQuery from "jquery";
+(function($, window, document, undefined) {
+  /**
+   * Creates the animate plugin.
+   * @class The Navigation Plugin
+   * @param {Owl} scope - The Owl Carousel
+   */
+  var Animate = function(scope) {
+    this.core = scope;
+    this.core.options = $.extend({}, Animate.Defaults, this.core.options);
+    this.swapping = true;
+    this.previous = undefined;
+    this.next = undefined;
 
-	/**
-	 * Creates the animate plugin.
-	 * @class The Navigation Plugin
-	 * @param {Owl} scope - The Owl Carousel
-	 */
-	var Animate = function(scope) {
-		this.core = scope;
-		this.core.options = $.extend({}, Animate.Defaults, this.core.options);
-		this.swapping = true;
-		this.previous = undefined;
-		this.next = undefined;
+    this.handlers = {
+      "change.owl.carousel": $.proxy(function(e) {
+        if (e.namespace && e.property.name == "position") {
+          this.previous = this.core.current();
+          this.next = e.property.value;
+        }
+      }, this),
+      "drag.owl.carousel dragged.owl.carousel translated.owl.carousel": $.proxy(function(e) {
+        if (e.namespace) {
+          this.swapping = e.type == "translated";
+        }
+      }, this),
+      "translate.owl.carousel": $.proxy(function(e) {
+        if (
+          e.namespace &&
+          this.swapping &&
+          (this.core.options.animateOut || this.core.options.animateIn)
+        ) {
+          this.swap();
+        }
+      }, this)
+    };
 
-		this.handlers = {
-			'change.owl.carousel': $.proxy(function(e) {
-				if (e.namespace && e.property.name == 'position') {
-					this.previous = this.core.current();
-					this.next = e.property.value;
-				}
-			}, this),
-			'drag.owl.carousel dragged.owl.carousel translated.owl.carousel': $.proxy(function(e) {
-				if (e.namespace) {
-					this.swapping = e.type == 'translated';
-				}
-			}, this),
-			'translate.owl.carousel': $.proxy(function(e) {
-				if (e.namespace && this.swapping && (this.core.options.animateOut || this.core.options.animateIn)) {
-					this.swap();
-				}
-			}, this)
-		};
+    this.core.$element.on(this.handlers);
+  };
 
-		this.core.$element.on(this.handlers);
-	};
+  /**
+   * Default options.
+   * @public
+   */
+  Animate.Defaults = {
+    animateOut: false,
+    animateIn: false
+  };
 
-	/**
-	 * Default options.
-	 * @public
-	 */
-	Animate.Defaults = {
-		animateOut: false,
-		animateIn: false
-	};
+  /**
+   * Toggles the animation classes whenever an translations starts.
+   * @protected
+   * @returns {Boolean|undefined}
+   */
+  Animate.prototype.swap = function() {
+    if (this.core.settings.items !== 1) {
+      return;
+    }
 
-	/**
-	 * Toggles the animation classes whenever an translations starts.
-	 * @protected
-	 * @returns {Boolean|undefined}
-	 */
-	Animate.prototype.swap = function() {
+    if (!$.support.animation || !$.support.transition) {
+      return;
+    }
 
-		if (this.core.settings.items !== 1) {
-			return;
-		}
+    this.core.speed(0);
 
-		if (!$.support.animation || !$.support.transition) {
-			return;
-		}
+    var left,
+      clear = $.proxy(this.clear, this),
+      previous = this.core.$stage.children().eq(this.previous),
+      next = this.core.$stage.children().eq(this.next),
+      incoming = this.core.settings.animateIn,
+      outgoing = this.core.settings.animateOut;
 
-		this.core.speed(0);
+    if (this.core.current() === this.previous) {
+      return;
+    }
 
-		var left,
-			clear = $.proxy(this.clear, this),
-			previous = this.core.$stage.children().eq(this.previous),
-			next = this.core.$stage.children().eq(this.next),
-			incoming = this.core.settings.animateIn,
-			outgoing = this.core.settings.animateOut;
+    if (outgoing) {
+      left = this.core.coordinates(this.previous) - this.core.coordinates(this.next);
+      previous
+        .one($.support.animation.end, clear)
+        .css({ left: left + "px" })
+        .addClass("animated owl-animated-out")
+        .addClass(outgoing);
+    }
 
-		if (this.core.current() === this.previous) {
-			return;
-		}
+    if (incoming) {
+      next
+        .one($.support.animation.end, clear)
+        .addClass("animated owl-animated-in")
+        .addClass(incoming);
+    }
+  };
 
-		if (outgoing) {
-			left = this.core.coordinates(this.previous) - this.core.coordinates(this.next);
-			previous.one($.support.animation.end, clear)
-				.css( { 'left': left + 'px' } )
-				.addClass('animated owl-animated-out')
-				.addClass(outgoing);
-		}
+  Animate.prototype.clear = function(e) {
+    $(e.target)
+      .css({ left: "" })
+      .removeClass("animated owl-animated-out owl-animated-in")
+      .removeClass(this.core.settings.animateIn)
+      .removeClass(this.core.settings.animateOut);
+    this.core.onTransitionEnd();
+  };
 
-		if (incoming) {
-			next.one($.support.animation.end, clear)
-				.addClass('animated owl-animated-in')
-				.addClass(incoming);
-		}
-	};
+  /**
+   * Destroys the plugin.
+   * @public
+   */
+  Animate.prototype.destroy = function() {
+    var handler, property;
 
-	Animate.prototype.clear = function(e) {
-		$(e.target).css( { 'left': '' } )
-			.removeClass('animated owl-animated-out owl-animated-in')
-			.removeClass(this.core.settings.animateIn)
-			.removeClass(this.core.settings.animateOut);
-		this.core.onTransitionEnd();
-	};
+    for (handler in this.handlers) {
+      this.core.$element.off(handler, this.handlers[handler]);
+    }
+    for (property in Object.getOwnPropertyNames(this)) {
+      typeof this[property] != "function" && (this[property] = null);
+    }
+  };
 
-	/**
-	 * Destroys the plugin.
-	 * @public
-	 */
-	Animate.prototype.destroy = function() {
-		var handler, property;
-
-		for (handler in this.handlers) {
-			this.core.$element.off(handler, this.handlers[handler]);
-		}
-		for (property in Object.getOwnPropertyNames(this)) {
-			typeof this[property] != 'function' && (this[property] = null);
-		}
-	};
-
-	$.fn.owlCarousel.Constructor.Plugins.Animate = Animate;
-
-})(window.Zepto || window.jQuery, window, document);
+  $.fn.owlCarousel.Constructor.Plugins.Animate = Animate;
+})(jQuery, window, document);
 
 /**
  * Autoplay Plugin
@@ -2608,230 +2633,229 @@
  * @author Tom De Caluwé
  * @license The MIT License (MIT)
  */
-;(function($, window, document, undefined) {
+import * as jQuery from "jquery";
+(function($, window, document, undefined) {
+  /**
+   * Creates the autoplay plugin.
+   * @class The Autoplay Plugin
+   * @param {Owl} scope - The Owl Carousel
+   */
+  var Autoplay = function(carousel) {
+    /**
+     * Reference to the core.
+     * @protected
+     * @type {Owl}
+     */
+    this._core = carousel;
 
-	/**
-	 * Creates the autoplay plugin.
-	 * @class The Autoplay Plugin
-	 * @param {Owl} scope - The Owl Carousel
-	 */
-	var Autoplay = function(carousel) {
-		/**
-		 * Reference to the core.
-		 * @protected
-		 * @type {Owl}
-		 */
-		this._core = carousel;
+    /**
+     * The autoplay timeout id.
+     * @type {Number}
+     */
+    this._call = null;
 
-		/**
-		 * The autoplay timeout id.
-		 * @type {Number}
-		 */
-		this._call = null;
+    /**
+     * Depending on the state of the plugin, this variable contains either
+     * the start time of the timer or the current timer value if it's
+     * paused. Since we start in a paused state we initialize the timer
+     * value.
+     * @type {Number}
+     */
+    this._time = 0;
 
-		/**
-		 * Depending on the state of the plugin, this variable contains either
-		 * the start time of the timer or the current timer value if it's
-		 * paused. Since we start in a paused state we initialize the timer
-		 * value.
-		 * @type {Number}
-		 */
-		this._time = 0;
+    /**
+     * Stores the timeout currently used.
+     * @type {Number}
+     */
+    this._timeout = 0;
 
-		/**
-		 * Stores the timeout currently used.
-		 * @type {Number}
-		 */
-		this._timeout = 0;
+    /**
+     * Indicates whenever the autoplay is paused.
+     * @type {Boolean}
+     */
+    this._paused = true;
 
-		/**
-		 * Indicates whenever the autoplay is paused.
-		 * @type {Boolean}
-		 */
-		this._paused = true;
+    /**
+     * All event handlers.
+     * @protected
+     * @type {Object}
+     */
+    this._handlers = {
+      "changed.owl.carousel": $.proxy(function(e) {
+        if (e.namespace && e.property.name === "settings") {
+          if (this._core.settings.autoplay) {
+            this.play();
+          } else {
+            this.stop();
+          }
+        } else if (e.namespace && e.property.name === "position" && this._paused) {
+          // Reset the timer. This code is triggered when the position
+          // of the carousel was changed through user interaction.
+          this._time = 0;
+        }
+      }, this),
+      "initialized.owl.carousel": $.proxy(function(e) {
+        if (e.namespace && this._core.settings.autoplay) {
+          this.play();
+        }
+      }, this),
+      "play.owl.autoplay": $.proxy(function(e, t, s) {
+        if (e.namespace) {
+          this.play(t, s);
+        }
+      }, this),
+      "stop.owl.autoplay": $.proxy(function(e) {
+        if (e.namespace) {
+          this.stop();
+        }
+      }, this),
+      "mouseover.owl.autoplay": $.proxy(function() {
+        if (this._core.settings.autoplayHoverPause && this._core.is("rotating")) {
+          this.pause();
+        }
+      }, this),
+      "mouseleave.owl.autoplay": $.proxy(function() {
+        if (this._core.settings.autoplayHoverPause && this._core.is("rotating")) {
+          this.play();
+        }
+      }, this),
+      "touchstart.owl.core": $.proxy(function() {
+        if (this._core.settings.autoplayHoverPause && this._core.is("rotating")) {
+          this.pause();
+        }
+      }, this),
+      "touchend.owl.core": $.proxy(function() {
+        if (this._core.settings.autoplayHoverPause) {
+          this.play();
+        }
+      }, this)
+    };
 
-		/**
-		 * All event handlers.
-		 * @protected
-		 * @type {Object}
-		 */
-		this._handlers = {
-			'changed.owl.carousel': $.proxy(function(e) {
-				if (e.namespace && e.property.name === 'settings') {
-					if (this._core.settings.autoplay) {
-						this.play();
-					} else {
-						this.stop();
-					}
-				} else if (e.namespace && e.property.name === 'position' && this._paused) {
-					// Reset the timer. This code is triggered when the position
-					// of the carousel was changed through user interaction.
-					this._time = 0;
-				}
-			}, this),
-			'initialized.owl.carousel': $.proxy(function(e) {
-				if (e.namespace && this._core.settings.autoplay) {
-					this.play();
-				}
-			}, this),
-			'play.owl.autoplay': $.proxy(function(e, t, s) {
-				if (e.namespace) {
-					this.play(t, s);
-				}
-			}, this),
-			'stop.owl.autoplay': $.proxy(function(e) {
-				if (e.namespace) {
-					this.stop();
-				}
-			}, this),
-			'mouseover.owl.autoplay': $.proxy(function() {
-				if (this._core.settings.autoplayHoverPause && this._core.is('rotating')) {
-					this.pause();
-				}
-			}, this),
-			'mouseleave.owl.autoplay': $.proxy(function() {
-				if (this._core.settings.autoplayHoverPause && this._core.is('rotating')) {
-					this.play();
-				}
-			}, this),
-			'touchstart.owl.core': $.proxy(function() {
-				if (this._core.settings.autoplayHoverPause && this._core.is('rotating')) {
-					this.pause();
-				}
-			}, this),
-			'touchend.owl.core': $.proxy(function() {
-				if (this._core.settings.autoplayHoverPause) {
-					this.play();
-				}
-			}, this)
-		};
+    // register event handlers
+    this._core.$element.on(this._handlers);
 
-		// register event handlers
-		this._core.$element.on(this._handlers);
+    // set default options
+    this._core.options = $.extend({}, Autoplay.Defaults, this._core.options);
+  };
 
-		// set default options
-		this._core.options = $.extend({}, Autoplay.Defaults, this._core.options);
-	};
+  /**
+   * Default options.
+   * @public
+   */
+  Autoplay.Defaults = {
+    autoplay: false,
+    autoplayTimeout: 5000,
+    autoplayHoverPause: false,
+    autoplaySpeed: false
+  };
 
-	/**
-	 * Default options.
-	 * @public
-	 */
-	Autoplay.Defaults = {
-		autoplay: false,
-		autoplayTimeout: 5000,
-		autoplayHoverPause: false,
-		autoplaySpeed: false
-	};
+  /**
+   * Transition to the next slide and set a timeout for the next transition.
+   * @private
+   * @param {Number} [speed] - The animation speed for the animations.
+   */
+  Autoplay.prototype._next = function(speed) {
+    this._call = window.setTimeout(
+      $.proxy(this._next, this, speed),
+      this._timeout * (Math.round(this.read() / this._timeout) + 1) - this.read()
+    );
 
-	/**
-	 * Transition to the next slide and set a timeout for the next transition.
-	 * @private
-	 * @param {Number} [speed] - The animation speed for the animations.
-	 */
-	Autoplay.prototype._next = function(speed) {
-		this._call = window.setTimeout(
-			$.proxy(this._next, this, speed),
-			this._timeout * (Math.round(this.read() / this._timeout) + 1) - this.read()
-		);
+    if (this._core.is("interacting") || document.hidden) {
+      return;
+    }
+    this._core.next(speed || this._core.settings.autoplaySpeed);
+  };
 
-		if (this._core.is('interacting') || document.hidden) {
-			return;
-		}
-		this._core.next(speed || this._core.settings.autoplaySpeed);
-	}
+  /**
+   * Reads the current timer value when the timer is playing.
+   * @public
+   */
+  Autoplay.prototype.read = function() {
+    return new Date().getTime() - this._time;
+  };
 
-	/**
-	 * Reads the current timer value when the timer is playing.
-	 * @public
-	 */
-	Autoplay.prototype.read = function() {
-		return new Date().getTime() - this._time;
-	};
+  /**
+   * Starts the autoplay.
+   * @public
+   * @param {Number} [timeout] - The interval before the next animation starts.
+   * @param {Number} [speed] - The animation speed for the animations.
+   */
+  Autoplay.prototype.play = function(timeout, speed) {
+    var elapsed;
 
-	/**
-	 * Starts the autoplay.
-	 * @public
-	 * @param {Number} [timeout] - The interval before the next animation starts.
-	 * @param {Number} [speed] - The animation speed for the animations.
-	 */
-	Autoplay.prototype.play = function(timeout, speed) {
-		var elapsed;
+    if (!this._core.is("rotating")) {
+      this._core.enter("rotating");
+    }
 
-		if (!this._core.is('rotating')) {
-			this._core.enter('rotating');
-		}
+    timeout = timeout || this._core.settings.autoplayTimeout;
 
-		timeout = timeout || this._core.settings.autoplayTimeout;
+    // Calculate the elapsed time since the last transition. If the carousel
+    // wasn't playing this calculation will yield zero.
+    elapsed = Math.min(this._time % (this._timeout || timeout), timeout);
 
-		// Calculate the elapsed time since the last transition. If the carousel
-		// wasn't playing this calculation will yield zero.
-		elapsed = Math.min(this._time % (this._timeout || timeout), timeout);
+    if (this._paused) {
+      // Start the clock.
+      this._time = this.read();
+      this._paused = false;
+    } else {
+      // Clear the active timeout to allow replacement.
+      window.clearTimeout(this._call);
+    }
 
-		if (this._paused) {
-			// Start the clock.
-			this._time = this.read();
-			this._paused = false;
-		} else {
-			// Clear the active timeout to allow replacement.
-			window.clearTimeout(this._call);
-		}
+    // Adjust the origin of the timer to match the new timeout value.
+    this._time += (this.read() % timeout) - elapsed;
 
-		// Adjust the origin of the timer to match the new timeout value.
-		this._time += this.read() % timeout - elapsed;
+    this._timeout = timeout;
+    this._call = window.setTimeout($.proxy(this._next, this, speed), timeout - elapsed);
+  };
 
-		this._timeout = timeout;
-		this._call = window.setTimeout($.proxy(this._next, this, speed), timeout - elapsed);
-	};
+  /**
+   * Stops the autoplay.
+   * @public
+   */
+  Autoplay.prototype.stop = function() {
+    if (this._core.is("rotating")) {
+      // Reset the clock.
+      this._time = 0;
+      this._paused = true;
 
-	/**
-	 * Stops the autoplay.
-	 * @public
-	 */
-	Autoplay.prototype.stop = function() {
-		if (this._core.is('rotating')) {
-			// Reset the clock.
-			this._time = 0;
-			this._paused = true;
+      window.clearTimeout(this._call);
+      this._core.leave("rotating");
+    }
+  };
 
-			window.clearTimeout(this._call);
-			this._core.leave('rotating');
-		}
-	};
+  /**
+   * Pauses the autoplay.
+   * @public
+   */
+  Autoplay.prototype.pause = function() {
+    if (this._core.is("rotating") && !this._paused) {
+      // Pause the clock.
+      this._time = this.read();
+      this._paused = true;
 
-	/**
-	 * Pauses the autoplay.
-	 * @public
-	 */
-	Autoplay.prototype.pause = function() {
-		if (this._core.is('rotating') && !this._paused) {
-			// Pause the clock.
-			this._time = this.read();
-			this._paused = true;
+      window.clearTimeout(this._call);
+    }
+  };
 
-			window.clearTimeout(this._call);
-		}
-	};
+  /**
+   * Destroys the plugin.
+   */
+  Autoplay.prototype.destroy = function() {
+    var handler, property;
 
-	/**
-	 * Destroys the plugin.
-	 */
-	Autoplay.prototype.destroy = function() {
-		var handler, property;
+    this.stop();
 
-		this.stop();
+    for (handler in this._handlers) {
+      this._core.$element.off(handler, this._handlers[handler]);
+    }
+    for (property in Object.getOwnPropertyNames(this)) {
+      typeof this[property] != "function" && (this[property] = null);
+    }
+  };
 
-		for (handler in this._handlers) {
-			this._core.$element.off(handler, this._handlers[handler]);
-		}
-		for (property in Object.getOwnPropertyNames(this)) {
-			typeof this[property] != 'function' && (this[property] = null);
-		}
-	};
-
-	$.fn.owlCarousel.Constructor.Plugins.autoplay = Autoplay;
-
-})(window.Zepto || window.jQuery, window, document);
+  $.fn.owlCarousel.Constructor.Plugins.autoplay = Autoplay;
+})(jQuery, window, document);
 
 /**
  * Navigation Plugin
@@ -2840,6 +2864,7 @@
  * @author David Deutsch
  * @license The MIT License (MIT)
  */
+import * as jQuery from 'jquery';
 ;(function($, window, document, undefined) {
 	'use strict';
 
@@ -3238,7 +3263,7 @@
 
 	$.fn.owlCarousel.Constructor.Plugins.Navigation = Navigation;
 
-})(window.Zepto || window.jQuery, window, document);
+})(jQuery, window, document);
 
 /**
  * Hash Plugin
@@ -3247,6 +3272,7 @@
  * @author David Deutsch
  * @license The MIT License (MIT)
  */
+import * as jQuery from 'jquery';
 ;(function($, window, document, undefined) {
 	'use strict';
 
@@ -3361,7 +3387,7 @@
 
 	$.fn.owlCarousel.Constructor.Plugins.Hash = Hash;
 
-})(window.Zepto || window.jQuery, window, document);
+})(jQuery, window, document);
 
 /**
  * Support Plugin
@@ -3372,6 +3398,7 @@
  * @author David Deutsch
  * @license The MIT License (MIT)
  */
+import * as jQuery from 'jquery';
 ;(function($, window, document, undefined) {
 
 	var style = $('<support>').get(0).style,
@@ -3445,4 +3472,4 @@
 		$.support.transform3d = tests.csstransforms3d();
 	}
 
-})(window.Zepto || window.jQuery, window, document);
+})(jQuery, window, document);

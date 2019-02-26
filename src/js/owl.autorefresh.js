@@ -5,6 +5,7 @@
  * @author David Deutsch
  * @license The MIT License (MIT)
  */
+import * as jQuery from 'jquery';
 ;(function($, window, document, undefined) {
 
 	/**
@@ -108,4 +109,4 @@
 
 	$.fn.owlCarousel.Constructor.Plugins.AutoRefresh = AutoRefresh;
 
-})(window.Zepto || window.jQuery, window, document);
+})(jQuery, window, document);
