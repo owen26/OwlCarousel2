@@ -1,5 +1,5 @@
 /**
- * Owl Carousel v3.0.0
+ * Owl Carousel v3.0.2
  * Copyright 2013-2019 David Deutsch
  * Licensed under: SEE LICENSE IN https://github.com/OwlCarousel2/OwlCarousel2/blob/master/LICENSE
  */
