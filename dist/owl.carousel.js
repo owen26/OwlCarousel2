@@ -1768,7 +1768,6 @@ import * as jQuery from 'jquery';
  * @author David Deutsch
  * @license The MIT License (MIT)
  */
-import * as jQuery from 'jquery';
 ;(function($, window, document, undefined) {
 
 	/**
@@ -1881,7 +1880,6 @@ import * as jQuery from 'jquery';
  * @author David Deutsch
  * @license The MIT License (MIT)
  */
-import * as jQuery from 'jquery';
 ;(function($, window, document, undefined) {
 
 	/**
@@ -2037,8 +2035,7 @@ import * as jQuery from 'jquery';
  * @author David Deutsch
  * @license The MIT License (MIT)
  */
-import * as jQuery from "jquery";
-(function($, window, document, undefined) {
+;(function($, window, document, undefined) {
   /**
    * Creates the auto height plugin.
    * @class The Auto Height Plugin
@@ -2175,7 +2172,6 @@ import * as jQuery from "jquery";
  * @author David Deutsch
  * @license The MIT License (MIT)
  */
-import * as jQuery from 'jquery';
 ;(function($, window, document, undefined) {
 
 	/**
@@ -2504,8 +2500,7 @@ import * as jQuery from 'jquery';
  * @author David Deutsch
  * @license The MIT License (MIT)
  */
-import * as jQuery from "jquery";
-(function($, window, document, undefined) {
+;(function($, window, document, undefined) {
   /**
    * Creates the animate plugin.
    * @class The Navigation Plugin
@@ -2633,8 +2628,7 @@ import * as jQuery from "jquery";
  * @author Tom De Caluwé
  * @license The MIT License (MIT)
  */
-import * as jQuery from "jquery";
-(function($, window, document, undefined) {
+;(function($, window, document, undefined) {
   /**
    * Creates the autoplay plugin.
    * @class The Autoplay Plugin
@@ -2864,7 +2858,6 @@ import * as jQuery from "jquery";
  * @author David Deutsch
  * @license The MIT License (MIT)
  */
-import * as jQuery from 'jquery';
 ;(function($, window, document, undefined) {
 	'use strict';
 
@@ -3272,7 +3265,6 @@ import * as jQuery from 'jquery';
  * @author David Deutsch
  * @license The MIT License (MIT)
  */
-import * as jQuery from 'jquery';
 ;(function($, window, document, undefined) {
 	'use strict';
 
@@ -3398,7 +3390,6 @@ import * as jQuery from 'jquery';
  * @author David Deutsch
  * @license The MIT License (MIT)
  */
-import * as jQuery from 'jquery';
 ;(function($, window, document, undefined) {
 
 	var style = $('<support>').get(0).style,

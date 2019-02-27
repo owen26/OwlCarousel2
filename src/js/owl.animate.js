@@ -5,8 +5,7 @@
  * @author David Deutsch
  * @license The MIT License (MIT)
  */
-import * as jQuery from "jquery";
-(function($, window, document, undefined) {
+;(function($, window, document, undefined) {
   /**
    * Creates the animate plugin.
    * @class The Navigation Plugin
