@@ -107,8 +107,8 @@ module.exports = function(grunt) {
                     outputStyle: "nested"
                 },
                 files: {
-                    "dist/assets/<%= pkg.name %>.css":
-                        "src/scss/<%= pkg.name %>.scss",
+                    "dist/assets/owl.carousel.css":
+                        "src/scss/owl.carousel.scss",
                     "dist/assets/owl.theme.default.css":
                         "src/scss/owl.theme.default.scss",
                     "dist/assets/owl.theme.green.css":
@@ -130,8 +130,8 @@ module.exports = function(grunt) {
             },
             dist: {
                 files: {
-                    "dist/assets/<%= pkg.name %>.css":
-                        "dist/assets/<%= pkg.name %>.css",
+                    "dist/assets/owl.carousel.css":
+                        "dist/assets/owl.carousel.css",
                     "dist/assets/owl.theme.default.css":
                         "dist/assets/owl.theme.default.css",
                     "dist/assets/owl.theme.green.css":
@@ -143,7 +143,7 @@ module.exports = function(grunt) {
         concat: {
             dist: {
                 files: {
-                    "dist/<%= pkg.name %>.js": "<%= app.src.scripts %>"
+                    "dist/owl.carousel.js": "<%= app.src.scripts %>"
                 }
             }
         },
@@ -151,8 +151,8 @@ module.exports = function(grunt) {
         cssmin: {
             dist: {
                 files: {
-                    "dist/assets/<%= pkg.name %>.min.css":
-                        "dist/assets/<%= pkg.name %>.css",
+                    "dist/assets/owl.carousel.min.css":
+                        "dist/assets/owl.carousel.css",
                     "dist/assets/owl.theme.default.min.css":
                         "dist/assets/owl.theme.default.css",
                     "dist/assets/owl.theme.green.min.css":
@@ -195,7 +195,7 @@ module.exports = function(grunt) {
                     linebreak: false
                 },
                 files: {
-                    src: ["dist/<%= pkg.name %>.js", "dist/assets/*.css"]
+                    src: ["dist/owl.carousel.js", "dist/assets/*.css"]
                 }
             }
         },
@@ -206,7 +206,7 @@ module.exports = function(grunt) {
             },
             dist: {
                 files: {
-                    "dist/<%= pkg.name %>.min.js": "dist/<%= pkg.name %>.js"
+                    "dist/owl.carousel.min.js": "dist/owl.carousel.js"
                 }
             }
         },
