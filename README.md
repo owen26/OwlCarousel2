@@ -4,7 +4,7 @@ This is a modified package for supporting ES6 module import syntax to avoid deve
 
 If you don\'t want to pollute your project's global configuration, simply want to have a nice and decent import line in your module to be able to use the great **owl.carousel** plugin, this is the package for you.
 
-This package only support ES66 import syntax, no legacy module system support. (CommonJS, AMD etc.)
+This package only support ES6 import syntax, no legacy module system support. (CommonJS, AMD etc.)
 
 ## How to use
 
