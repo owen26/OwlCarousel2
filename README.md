@@ -1,4 +1,29 @@
-# Owl Carousel 2
+# Owl Carousel 2 (With ES6 module support)
+
+This is a modified package for supporting ES6 module import syntax to avoid developers hack into global scripts *(Webpack config, angular.json, index.html `<script src="...">` etc.)*
+
+If you don\'t want to pollute your project's global configuration, simply want to have a nice and decent import line in your module to be able to use the great **owl.carousel** plugin, this is the package for you.
+
+This package only support ES66 import syntax, no legacy module system support. (CommonJS, AMD etc.)
+
+## How to use
+
+### Install it
+
+```
+npm install owl.carousel.es6
+```
+
+### Use it
+
+```javascript
+import * as $ from 'jquery';
+import 'owl.carousel.es6'
+
+$(element).owlCarousel({...});
+```
+
+### *Original README below:*
 
 Touch enabled [jQuery](https://jquery.com/) plugin that lets you create a beautiful, responsive carousel slider. **To get started, check out https://owlcarousel2.github.io/OwlCarousel2/.**
 
